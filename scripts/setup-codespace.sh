@@ -222,7 +222,6 @@ main() {
       echo "Could not locate a Java 17 installation. Please install JDK 17 and set JAVA_HOME." >&2
       exit 1
     fi
-    write_android_gradle_properties
     persist_env
   fi
 

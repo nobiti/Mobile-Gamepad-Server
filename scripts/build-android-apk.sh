@@ -39,10 +39,6 @@ fi
 export JAVA_HOME="$JAVA17_HOME"
 export PATH="$JAVA_HOME/bin:$PATH"
 
-GRADLE_JAVA_OPTS=("-Dorg.gradle.java.home=$JAVA_HOME")
-echo "Using JAVA_HOME=$JAVA_HOME"
-"$JAVA_HOME/bin/java" -version
-
 if ! curl -fsSLI "https://dl.google.com/dl/android/maven2/" >/dev/null 2>&1; then
   echo "Cannot reach Google Android Maven (https://dl.google.com/dl/android/maven2/)." >&2
   echo "Your environment/network is blocking Android Gradle plugin downloads (often HTTP 403)." >&2
