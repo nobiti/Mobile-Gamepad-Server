@@ -47,7 +47,7 @@ jobs:
             exit 0
           fi
           echo "Gradle wrapper JAR missing â€” downloading Gradle distribution to generate wrapper"
-          DIST_URL=$(sed -n 's/^distributionUrl=\(.*\)$/\1/p' android-app/gradle/wrapper/gradle-wrapper.properties | sed 's/\\\://g')
+          DIST_URL=$(sed -n 's/^distributionUrl=\(.*\)$/\1/p' android-app/gradle/wrapper/gradle-wrapper.properties | sed 's#\\##g')
           # fallback URL if parsing fails
           DIST_URL=${DIST_URL:-https://services.gradle.org/distributions/gradle-8.14.3-bin.zip}
           echo "Using distribution: $DIST_URL"
