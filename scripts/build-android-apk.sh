@@ -39,6 +39,7 @@ fi
 export JAVA_HOME="$JAVA17_HOME"
 export PATH="$JAVA_HOME/bin:$PATH"
 export ORG_GRADLE_JAVA_HOME="$JAVA_HOME"
+unset JAVA_TOOL_OPTIONS JDK_JAVA_OPTIONS _JAVA_OPTIONS
 
 # Prevent stale daemon/caches from previous Java versions (e.g. Java 25) from being reused.
 export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle-mobile-gamepad}"
@@ -47,6 +48,10 @@ mkdir -p "$GRADLE_USER_HOME"
 GRADLE_JAVA_OPTS=("-Dorg.gradle.java.home=$JAVA_HOME")
 echo "Using JAVA_HOME=$JAVA_HOME"
 "$JAVA_HOME/bin/java" -version
+if ! java -version 2>&1 | grep -q 'version "17'; then
+  echo "Java 17 enforcement failed (active java is not 17)." >&2
+  exit 1
+fi
 
 if ! curl -fsSLI "https://dl.google.com/dl/android/maven2/" >/dev/null 2>&1; then
   echo "Cannot reach Google Android Maven (https://dl.google.com/dl/android/maven2/)." >&2
@@ -58,18 +63,18 @@ fi
 cd "$APP_DIR"
 chmod +x ./gradlew || true
 
-if command -v gradle >/dev/null 2>&1; then
-  gradle --stop >/dev/null 2>&1 || true
-elif [[ -x "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" ]]; then
+if [[ -x "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" ]]; then
   "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" --stop >/dev/null 2>&1 || true
+elif command -v gradle >/dev/null 2>&1; then
+  gradle --stop >/dev/null 2>&1 || true
 fi
 
 if [[ -f "$APP_DIR/gradle/wrapper/gradle-wrapper.jar" ]]; then
   ./gradlew --no-daemon "${GRADLE_JAVA_OPTS[@]}" clean assembleDebug
-elif command -v gradle >/dev/null 2>&1; then
-  gradle --no-daemon "${GRADLE_JAVA_OPTS[@]}" -p "$APP_DIR" clean assembleDebug
 elif [[ -x "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" ]]; then
   "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" --no-daemon "${GRADLE_JAVA_OPTS[@]}" -p "$APP_DIR" clean assembleDebug
+elif command -v gradle >/dev/null 2>&1; then
+  gradle --no-daemon "${GRADLE_JAVA_OPTS[@]}" -p "$APP_DIR" clean assembleDebug
 else
   echo "No Gradle runtime found. Run scripts/setup-codespace.sh android first." >&2
   exit 1

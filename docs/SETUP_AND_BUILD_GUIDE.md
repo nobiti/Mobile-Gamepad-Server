@@ -168,6 +168,7 @@ sudo apt-get update
 - This means Gradle/Kotlin picked Java 25 instead of Java 17.
 - `scripts/build-android-apk.sh` forces Gradle to Java 17 (`JAVA_HOME` + `ORG_GRADLE_JAVA_HOME` + `-Dorg.gradle.java.home`) and prints the selected Java version.
 - The script also uses an isolated `GRADLE_USER_HOME` and stops existing daemons to avoid stale Java 25 daemon reuse.
+- It also clears JVM override env vars (`JAVA_TOOL_OPTIONS`, `JDK_JAVA_OPTIONS`, `_JAVA_OPTIONS`) that can force the wrong JDK during Gradle startup.
 
 ## QR scan fails on Android
 
