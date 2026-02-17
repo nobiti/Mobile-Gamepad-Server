@@ -163,6 +163,12 @@ sudo apt-get update
 - The build script now checks this endpoint first and exits with a clear message when blocked.
 - Fix by allowing `dl.google.com` in your proxy/firewall (or run in a network without this restriction), then re-run `./scripts/build-android-apk.sh`.
 
+## Android build fails with `25.0.1`
+
+- This means Gradle/Kotlin picked Java 25 instead of Java 17.
+- `scripts/build-android-apk.sh` forces Gradle to Java 17 (`JAVA_HOME` + `ORG_GRADLE_JAVA_HOME` + `-Dorg.gradle.java.home`) and prints the selected Java version.
+- The script also uses an isolated `GRADLE_USER_HOME` and stops existing daemons to avoid stale Java 25 daemon reuse.
+
 ## QR scan fails on Android
 
 - Confirm camera permission is granted.

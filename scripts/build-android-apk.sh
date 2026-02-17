@@ -38,6 +38,15 @@ if [[ -z "$JAVA17_HOME" ]]; then
 fi
 export JAVA_HOME="$JAVA17_HOME"
 export PATH="$JAVA_HOME/bin:$PATH"
+export ORG_GRADLE_JAVA_HOME="$JAVA_HOME"
+
+# Prevent stale daemon/caches from previous Java versions (e.g. Java 25) from being reused.
+export GRADLE_USER_HOME="${GRADLE_USER_HOME:-$HOME/.gradle-mobile-gamepad}"
+mkdir -p "$GRADLE_USER_HOME"
+
+GRADLE_JAVA_OPTS=("-Dorg.gradle.java.home=$JAVA_HOME")
+echo "Using JAVA_HOME=$JAVA_HOME"
+"$JAVA_HOME/bin/java" -version
 
 if ! curl -fsSLI "https://dl.google.com/dl/android/maven2/" >/dev/null 2>&1; then
   echo "Cannot reach Google Android Maven (https://dl.google.com/dl/android/maven2/)." >&2
@@ -48,6 +57,12 @@ fi
 
 cd "$APP_DIR"
 chmod +x ./gradlew || true
+
+if command -v gradle >/dev/null 2>&1; then
+  gradle --stop >/dev/null 2>&1 || true
+elif [[ -x "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" ]]; then
+  "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" --stop >/dev/null 2>&1 || true
+fi
 
 if [[ -f "$APP_DIR/gradle/wrapper/gradle-wrapper.jar" ]]; then
   ./gradlew --no-daemon "${GRADLE_JAVA_OPTS[@]}" clean assembleDebug

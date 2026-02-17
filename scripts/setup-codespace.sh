@@ -152,15 +152,8 @@ install_gradle() {
 
 write_android_gradle_properties() {
   local project_gradle_props="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/android-app/gradle.properties"
-  if [[ -z "$JAVA17_HOME" ]]; then
-    return
-  fi
-
-  log "Writing android-app/gradle.properties with Java 17"
+  log "Writing android-app/gradle.properties"
   cat > "$project_gradle_props" <<EOF
-# Keep Gradle/Kotlin on Java 17 even when shell default JDK is newer.
-org.gradle.java.home=${JAVA17_HOME}
-
 # Standard Gradle settings
 org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
 android.useAndroidX=true
@@ -222,6 +215,7 @@ main() {
       echo "Could not locate a Java 17 installation. Please install JDK 17 and set JAVA_HOME." >&2
       exit 1
     fi
+    write_android_gradle_properties
     persist_env
   fi
 
