@@ -150,6 +150,24 @@ install_gradle() {
   fi
 }
 
+write_android_gradle_properties() {
+  local project_gradle_props="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/android-app/gradle.properties"
+  if [[ -z "$JAVA17_HOME" ]]; then
+    return
+  fi
+
+  log "Writing android-app/gradle.properties with Java 17"
+  cat > "$project_gradle_props" <<EOF
+# Keep Gradle/Kotlin on Java 17 even when shell default JDK is newer.
+org.gradle.java.home=${JAVA17_HOME}
+
+# Standard Gradle settings
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+android.useAndroidX=true
+kotlin.code.style=official
+EOF
+}
+
 persist_env() {
   log "Persisting environment variables to ~/.bashrc"
   local start="# >>> Mobile-Gamepad-Server build environment >>>"

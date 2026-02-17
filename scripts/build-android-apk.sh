@@ -50,11 +50,11 @@ cd "$APP_DIR"
 chmod +x ./gradlew || true
 
 if [[ -f "$APP_DIR/gradle/wrapper/gradle-wrapper.jar" ]]; then
-  ./gradlew --no-daemon clean assembleDebug
+  ./gradlew --no-daemon "${GRADLE_JAVA_OPTS[@]}" clean assembleDebug
 elif command -v gradle >/dev/null 2>&1; then
-  gradle --no-daemon -p "$APP_DIR" clean assembleDebug
+  gradle --no-daemon "${GRADLE_JAVA_OPTS[@]}" -p "$APP_DIR" clean assembleDebug
 elif [[ -x "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" ]]; then
-  "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" --no-daemon -p "$APP_DIR" clean assembleDebug
+  "$HOME/.local/gradle/gradle-8.14.3/bin/gradle" --no-daemon "${GRADLE_JAVA_OPTS[@]}" -p "$APP_DIR" clean assembleDebug
 else
   echo "No Gradle runtime found. Run scripts/setup-codespace.sh android first." >&2
   exit 1
