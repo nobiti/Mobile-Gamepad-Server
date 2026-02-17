@@ -156,6 +156,19 @@ sudo apt-get update
 - Re-run setup and verify outbound access from Codespaces.
 - Check proxy/network restrictions in your Codespace org settings.
 
+
+## Android build fails with plugin not found / HTTP 403
+
+- If you see plugin resolution errors like `com.android.application ... was not found` with references to `Google` repository, your environment cannot reach `https://dl.google.com/dl/android/maven2/`.
+- The build script now checks this endpoint first and exits with a clear message when blocked.
+- Fix by allowing `dl.google.com` in your proxy/firewall (or run in a network without this restriction), then re-run `./scripts/build-android-apk.sh`.
+
+## Android build fails with `25.0.1`
+
+- This means Gradle/Kotlin picked Java 25 instead of Java 17.
+- `scripts/setup-codespace.sh all` now writes `android-app/gradle.properties` with `org.gradle.java.home=<java17-path>`.
+- `scripts/build-android-apk.sh` also forces Gradle to use Java 17 via `-Dorg.gradle.java.home` and prints the selected Java version.
+
 ## QR scan fails on Android
 
 - Confirm camera permission is granted.

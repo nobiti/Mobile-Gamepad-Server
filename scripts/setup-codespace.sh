@@ -10,6 +10,7 @@ GRADLE_VERSION="8.14.3"
 GRADLE_DIR="$HOME/.local/gradle"
 GRADLE_HOME="$GRADLE_DIR/gradle-$GRADLE_VERSION"
 GRADLE_ZIP_URL="https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+JAVA17_HOME=""
 
 log() {
   printf '\n[setup] %s\n' "$1"
@@ -32,12 +33,36 @@ dotnet  : install .NET build prerequisites only
 USAGE
 }
 
+resolve_java17_home() {
+  local candidates=(
+    "/usr/lib/jvm/java-17-openjdk-amd64"
+    "/usr/lib/jvm/java-17-openjdk"
+    "$HOME/.local/share/mise/installs/java/17.0.2"
+    "$HOME/.local/share/mise/installs/java/17"
+  )
+
+  for c in "${candidates[@]}"; do
+    if [[ -x "$c/bin/java" ]]; then
+      JAVA17_HOME="$c"
+      return
+    fi
+  done
+
+  local found
+  found="$(find "$HOME/.local/share/mise/installs/java" -maxdepth 1 -type d -name '17*' 2>/dev/null | sort -V | head -n 1 || true)"
+  if [[ -n "$found" && -x "$found/bin/java" ]]; then
+    JAVA17_HOME="$found"
+  fi
+}
+
 install_base_packages() {
   log "Installing base packages"
   apt_update_with_fallback
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
     curl wget unzip zip jq ca-certificates git \
     openjdk-17-jdk
+
+  resolve_java17_home
 }
 
 disable_problematic_yarn_repo() {
@@ -125,6 +150,24 @@ install_gradle() {
   fi
 }
 
+write_android_gradle_properties() {
+  local project_gradle_props="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/android-app/gradle.properties"
+  if [[ -z "$JAVA17_HOME" ]]; then
+    return
+  fi
+
+  log "Writing android-app/gradle.properties with Java 17"
+  cat > "$project_gradle_props" <<EOF
+# Keep Gradle/Kotlin on Java 17 even when shell default JDK is newer.
+org.gradle.java.home=${JAVA17_HOME}
+
+# Standard Gradle settings
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+android.useAndroidX=true
+kotlin.code.style=official
+EOF
+}
+
 persist_env() {
   log "Persisting environment variables to ~/.bashrc"
   local start="# >>> Mobile-Gamepad-Server build environment >>>"
@@ -138,6 +181,7 @@ persist_env() {
 $start
 export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT}"
 export ANDROID_HOME="${ANDROID_SDK_ROOT}"
+export JAVA_HOME="${JAVA17_HOME}"
 export PATH="${ANDROID_CMDLINE_TOOLS_DIR}/bin:${ANDROID_SDK_ROOT}/platform-tools:${GRADLE_HOME}/bin:\$PATH"
 $end
 ENV_SNIPPET
@@ -171,6 +215,14 @@ main() {
   if [[ "$MODE" == "all" || "$MODE" == "android" ]]; then
     install_android_cmdline_tools
     install_gradle
+    if [[ -z "$JAVA17_HOME" ]]; then
+      resolve_java17_home
+    fi
+    if [[ -z "$JAVA17_HOME" ]]; then
+      echo "Could not locate a Java 17 installation. Please install JDK 17 and set JAVA_HOME." >&2
+      exit 1
+    fi
+    write_android_gradle_properties
     persist_env
   fi
 
