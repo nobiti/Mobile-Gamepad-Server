@@ -23,13 +23,17 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK and tools
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 31
-          target: default
-          arch: x86_64
-          script: echo "No-op"
+      - name: Ensure Android SDK (no emulator)
+        run: |
+          echo "Skipping emulator setup; building without emulator"
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}"
+          if [ -x "${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}/cmdline-tools/latest/bin/sdkmanager" ]; then
+            "${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}/cmdline-tools/latest/bin/sdkmanager" --version || true
+          elif command -v sdkmanager >/dev/null 2>&1; then
+            sdkmanager --version || true
+          else
+            echo "sdkmanager not found; Gradle may download required components at build time"
+          fi
 
       - name: Make gradlew executable
         run: chmod +x android-app/gradlew
