@@ -140,6 +140,17 @@ dotnet publish -c Release -r win-x64 --self-contained false -p:EnableWindowsTarg
 
 ## 5) Common issues
 
+
+## `apt-get update` fails with Yarn GPG key error
+
+- The setup script now auto-detects this exact error (`NO_PUBKEY 62D54FD4003F6525`) and disables the broken Yarn apt source before retrying.
+- If needed, you can manually disable it with:
+
+```bash
+sudo sed -i "s|^deb |# deb |g" /etc/apt/sources.list.d/yarn.list
+sudo apt-get update
+```
+
 ## Gradle fails to download dependencies
 
 - Re-run setup and verify outbound access from Codespaces.

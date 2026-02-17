@@ -34,10 +34,38 @@ USAGE
 
 install_base_packages() {
   log "Installing base packages"
-  sudo apt-get update
+  apt_update_with_fallback
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
     curl wget unzip zip jq ca-certificates git \
     openjdk-17-jdk
+}
+
+disable_problematic_yarn_repo() {
+  local yarn_list="/etc/apt/sources.list.d/yarn.list"
+  if [[ -f "$yarn_list" ]]; then
+    log "Disabling problematic Yarn apt source ($yarn_list)"
+    sudo sed -i 's|^deb |# deb |g' "$yarn_list"
+  fi
+}
+
+apt_update_with_fallback() {
+  local log_file
+  log_file="$(mktemp)"
+  if sudo apt-get update 2>&1 | tee "$log_file"; then
+    rm -f "$log_file"
+    return
+  fi
+
+  if grep -q "dl.yarnpkg.com/debian" "$log_file" || grep -q "NO_PUBKEY 62D54FD4003F6525" "$log_file"; then
+    disable_problematic_yarn_repo
+    log "Retrying apt-get update after disabling Yarn apt source"
+    sudo apt-get update
+  else
+    echo "apt-get update failed. See logs above." >&2
+    rm -f "$log_file"
+    exit 1
+  fi
+  rm -f "$log_file"
 }
 
 install_dotnet() {
@@ -50,7 +78,7 @@ install_dotnet() {
   wget -q "https://packages.microsoft.com/config/ubuntu/$(. /etc/os-release && echo "$VERSION_ID")/packages-microsoft-prod.deb" -O /tmp/packages-microsoft-prod.deb
   sudo dpkg -i /tmp/packages-microsoft-prod.deb
   rm -f /tmp/packages-microsoft-prod.deb
-  sudo apt-get update
+  apt_update_with_fallback
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y dotnet-sdk-8.0
 }
 
