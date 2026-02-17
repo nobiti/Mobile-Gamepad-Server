@@ -38,6 +38,37 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x android-app/gradlew
 
+      - name: Ensure Gradle wrapper JAR exists
+        run: |
+          set -euo pipefail
+          WRAPPER_JAR=android-app/gradle/wrapper/gradle-wrapper.jar
+          if [ -f "$WRAPPER_JAR" ]; then
+            echo "Gradle wrapper JAR already present"
+            exit 0
+          fi
+          echo "Gradle wrapper JAR missing â€” downloading Gradle distribution to generate wrapper"
+          DIST_URL=$(sed -n 's/^distributionUrl=\(.*\)$/\1/p' android-app/gradle/wrapper/gradle-wrapper.properties | sed 's/\\\://g')
+          # fallback URL if parsing fails
+          DIST_URL=${DIST_URL:-https://services.gradle.org/distributions/gradle-8.14.3-bin.zip}
+          echo "Using distribution: $DIST_URL"
+          sudo apt-get update && sudo apt-get install -y unzip curl
+          TMPDIR=$(mktemp -d)
+          pushd "$TMPDIR"
+          curl -sSLo gradle.zip "$DIST_URL"
+          unzip -q gradle.zip
+          GRADLE_DIR=$(find . -maxdepth 1 -type d -name "gradle-*" | head -n1)
+          if [ -z "$GRADLE_DIR" ]; then
+            echo "Failed to extract gradle distribution"
+            ls -la
+            exit 1
+          fi
+          echo "Using extracted gradle: $GRADLE_DIR"
+          PATH="$PWD/$GRADLE_DIR/bin:$PATH"
+          pushd android-app
+          gradle wrapper --gradle-version 8.14.3 || true
+          popd
+          popd
+
       - name: Accept Android SDK licenses (best-effort)
         shell: bash
         run: |
